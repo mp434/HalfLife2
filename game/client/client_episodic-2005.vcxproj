@@ -1458,6 +1458,7 @@ if exist "$(TargetDir)"client.pdb copy "$(TargetDir)"client.pdb "C:\Program File
     <Library Include="..\..\lib\public\vstdlib.lib" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="ClassDiagram1.cd" />
     <None Include="client_episodic.vpc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

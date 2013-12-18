@@ -621,6 +621,8 @@ CGameMovement::CGameMovement( void )
 	memset( m_flStuckCheckTime, 0, sizeof(m_flStuckCheckTime) );
 }
 
+bool	CheckJumpButton( void );
+
 //-----------------------------------------------------------------------------
 // Purpose: Destructor
 //-----------------------------------------------------------------------------
@@ -928,6 +930,7 @@ void CGameMovement::CategorizeGroundSurface( trace_t &pm )
 
 	player->m_chTextureType = player->m_pSurfaceData->game.material;
 }
+
 
 bool CGameMovement::IsDead( void ) const
 {
@@ -2345,8 +2348,9 @@ void CGameMovement::PlaySwimSound()
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CGameMovement::CheckJumpButton( void )
+bool CGameMovement::CheckJumpButton()
 {
+
 	if (player->pl.deadflag)
 	{
 		mv->m_nOldButtons |= IN_JUMP ;	// don't jump again until released
@@ -2410,6 +2414,88 @@ bool CGameMovement::CheckJumpButton( void )
 		return false;
 
 
+	float startz = 0.0f;
+    float starty = 0.0f;
+    float startx = 0.0f;
+
+    float flMul;
+
+    // This controls how high you jump
+    if ( g_bMovementOptimizations )
+    {
+        Assert( sv_gravity.GetFloat() == 800.0f );
+        flMul = 268.3281572999747f;
+    }
+    else
+    {
+        flMul = sqrt(2 * sv_gravity.GetFloat() * GAMEMOVEMENT_JUMP_HEIGHT); // 183.303028
+    }
+
+	//-----------------------------------------------------
+	// If we are not on the ground....
+    if (true)
+    {
+		flMul = 0;
+        int i = 0;
+        Vector EndPoint;
+        trace_t tr;
+
+        EndPoint[2] = player->GetAbsOrigin()[2];    // set the z value of the trace endpoint to the player z value
+
+        // Store the original velocity
+        startx = mv->m_vecVelocity[0];
+        starty = mv->m_vecVelocity[1];
+        startz = mv->m_vecVelocity[2];
+
+        if( true)
+        {
+            // setup the trace end point as 24 units to the left of the player
+            for(i = 0; i < 2; i++)
+                EndPoint[i] = player->GetAbsOrigin()[i] + m_vecRight[i] * -24.0f;
+
+            UTIL_TraceLine( player->GetAbsOrigin(), EndPoint, MASK_SOLID_BRUSHONLY, NULL, COLLISION_GROUP_NONE, &tr);
+           
+            if( true )  // if there was a wall
+            {
+                for(i = 0; i < 2; i++)
+                    mv->m_vecVelocity[i] = m_vecRight[i] * 275 * 1.1;
+
+                mv->m_vecVelocity[2] += flMul;    // Jump!
+            }
+            else
+            {
+                // no wall found, do nothing
+                mv->m_nOldButtons |= IN_JUMP;
+                return false;
+            }
+        }
+        else if( mv->m_nButtons)
+        {
+            for(i = 0; i < 2; i++)  // setup the trace end point as 24 units to the right of the player
+                EndPoint[i] = player->GetAbsOrigin()[i] + m_vecRight[i] * 24.0f;
+
+            UTIL_TraceLine( player->GetAbsOrigin(), EndPoint, MASK_SOLID_BRUSHONLY, NULL, COLLISION_GROUP_NONE, &tr);
+
+            if( tr.fraction < 1.0 )  // if there was a wall
+            {
+                for(i = 0; i < 2; i++)
+                    mv->m_vecVelocity[i] = m_vecRight[i] * -275 * 1.1;
+
+                mv->m_vecVelocity[2] += flMul;    // Jump!
+            }
+            else
+            {
+                // No wall found, do nothing
+                mv->m_nOldButtons |= IN_JUMP;
+                return false;
+            }
+        }
+
+
+	}
+	else // We are on the ground, normal jump
+	{
+
 	// In the air now.
     SetGroundEntity( NULL );
 	
@@ -2451,43 +2537,18 @@ bool CGameMovement::CheckJumpButton( void )
 		// v = g * sqrt(2.0 * 45 / g )
 		// v^2 = g * g * 2.0 * 45 / g
 		// v = sqrt( g * 2.0 * 45 )
+		flMul = 2000;
 		mv->m_vecVelocity[2] = flGroundFactor * flMul;  // 2 * gravity * height
 	}
 	else
 	{
+		flMul = 2000;
 		mv->m_vecVelocity[2] += flGroundFactor * flMul;  // 2 * gravity * height
 	}
 
-	// Add a little forward velocity based on your current forward velocity - if you are not sprinting.
-#if defined( HL2_DLL ) || defined( HL2_CLIENT_DLL )
-	if ( gpGlobals->maxClients == 1 )
-	{
-		CHLMoveData *pMoveData = ( CHLMoveData* )mv;
-		Vector vecForward;
-		AngleVectors( mv->m_vecViewAngles, &vecForward );
-		vecForward.z = 0;
-		VectorNormalize( vecForward );
-		
-		// We give a certain percentage of the current forward movement as a bonus to the jump speed.  That bonus is clipped
-		// to not accumulate over time.
-		float flSpeedBoostPerc = ( !pMoveData->m_bIsSprinting && !player->m_Local.m_bDucked ) ? 0.5f : 0.1f;
-		float flSpeedAddition = fabs( mv->m_flForwardMove * flSpeedBoostPerc );
-		float flMaxSpeed = mv->m_flMaxSpeed + ( mv->m_flMaxSpeed * flSpeedBoostPerc );
-		float flNewSpeed = ( flSpeedAddition + mv->m_vecVelocity.Length2D() );
 
-		// If we're over the maximum, we want to only boost as much as will get us to the goal speed
-		if ( flNewSpeed > flMaxSpeed )
-		{
-			flSpeedAddition -= flNewSpeed - flMaxSpeed;
-		}
 
-		if ( mv->m_flForwardMove < 0.0f )
-			flSpeedAddition *= -1.0f;
-
-		// Add it on
-		VectorAdd( (vecForward*flSpeedAddition), mv->m_vecVelocity, mv->m_vecVelocity );
-	}
-#endif
+}
 
 	FinishGravity();
 

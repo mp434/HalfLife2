@@ -3294,5 +3294,6 @@
     <None Include="client_episodic.vpc">
       <Filter>Resources</Filter>
     </None>
+    <None Include="ClassDiagram1.cd" />
   </ItemGroup>
 </Project>

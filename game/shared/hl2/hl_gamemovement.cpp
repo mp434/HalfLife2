@@ -1118,6 +1118,11 @@ bool CHL2GameMovement::LadderMove( void )
 
 	return true;
 }
+bool CHL2GameMovement::CheckJumpButton()
+{
+	// I can't seem to override the jump code ;(.
+	return false;
+}
 
 void CHL2GameMovement::SetGroundEntity( trace_t *pm )
 {
@@ -1153,6 +1158,7 @@ bool CHL2GameMovement::CanAccelerate()
 	IGameMovement *g_pGameMovement = ( IGameMovement * )&g_GameMovement;
 
 	EXPOSE_SINGLE_INTERFACE_GLOBALVAR(CGameMovement, IGameMovement,INTERFACENAME_GAMEMOVEMENT, g_GameMovement );
+	extern bool g_bMovementOptimizations;
 #endif
 
 //-----------------------------------------------------------------------------

@@ -35,6 +35,7 @@ public:
 	DECLARE_CLASS_NOBASE( CGameMovement );
 	
 	CGameMovement( void );
+	bool CheckJumpButton();
 	virtual			~CGameMovement( void );
 
 	virtual void	ProcessMovement( CBasePlayer *pPlayer, CMoveData *pMove );
@@ -134,7 +135,9 @@ protected:
 	void			FullNoClipMove( float factor, float maxacceleration );
 
 	// Returns true if he started a jump (ie: should he play the jump animation)?
-	virtual bool	CheckJumpButton( void );	// Overridden by each game.
+	//virtual bool	CheckJumpButton( void );	// Overridden by each game.
+	
+
 
 	// Dead player flying through air., e.g.
 	virtual void    FullTossMove( void );
@@ -154,6 +157,7 @@ protected:
 	virtual unsigned int LadderMask( void ) const { return MASK_PLAYERSOLID; }
 	virtual float	ClimbSpeed( void ) const { return MAX_CLIMB_SPEED; }
 	virtual float	LadderLateralMultiplier( void ) const { return 1.0f; }
+
 
 	// See if the player has a bogus velocity value.
 	void			CheckVelocity( void );
@@ -265,9 +269,9 @@ protected:
 public:
 	void			ForceDuck( void );
 
+
 #endif
 };
-
 
 //-----------------------------------------------------------------------------
 // Traces player movement + position
